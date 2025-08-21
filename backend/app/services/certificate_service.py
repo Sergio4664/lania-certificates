@@ -1,44 +1,40 @@
 # app/services/certificate_service.py
-import secrets, base64
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import date
+from app.services.pdf_service import generate_certificate_pdf
 from app.models.certificate import Certificate
-from app.models.enums import CertificateStatus
-from app.services.qr_service import generate_qr_png
-from app.services.pdf_service import render_html, html_to_pdf_bytes
+from app.database import SessionLocal
 
-PDF_DIR = Path("storage/pdfs"); PDF_DIR.mkdir(parents=True, exist_ok=True)
+def issue_certificate(participant_id: int, course_id: int, hours: int) -> Certificate:
+    """
+    Genera un certificado para un participante y lo guarda en la base de datos.
+    Retorna el objeto Certificate.
+    """
 
-def template_by_kind(kind: str) -> str:
-    return {
-        "ASISTENCIA":"constancia_asistencia.html",
-        "APROBACION":"constancia_aprobacion.html",
-        "PARTICIPACION":"constancia_participacion.html",
-        "DIPLOMADO":"constancia_diplomado.html",
-        "TALLER":"constancia_taller.html"
-    }[kind]
+    db = SessionLocal()
 
-def issue_certificate(db, cert: Certificate, participant: dict, course: dict):
-    cert.serial = cert.serial or f"LANIA-{secrets.token_hex(6).upper()}"
-    cert.qr_token = cert.qr_token or secrets.token_urlsafe(24)
+    # Simulación: buscar nombres desde la BD (simplificado)
+    participant_name = f"Participante {participant_id}"
+    course_name = f"Curso {course_id}"
 
-    qr_png = generate_qr_png(f"https://validar.lania.mx/c/{cert.qr_token}")
-    qr_data_url = "data:image/png;base64," + base64.b64encode(qr_png).decode()
+    # Generar el PDF en memoria
+    pdf_bytes = generate_certificate_pdf(
+        participant_name=participant_name,
+        course_name=course_name,
+        hours=hours,
+        issue_date=date.today()
+    )
 
-    html = render_html(template_by_kind(cert.kind), {
-        "participante": participant["full_name"],
-        "curso": course["name"],
-        "horas": course["hours"],
-        "fecha": datetime.now().strftime("%d/%m/%Y"),
-        "serial": cert.serial,
-        "qr_data_url": qr_data_url
-    })
-    pdf_bytes = html_to_pdf_bytes(html, css_files=[str(PDF_DIR.parents[1] / "app" / "templates" / "base.css")])
-    path = PDF_DIR / f"{cert.serial}.pdf"
-    path.write_bytes(pdf_bytes)
+    # Crear registro en la tabla certificate
+    cert = Certificate(
+        participant_id=participant_id,
+        course_id=course_id,
+        pdf_content=pdf_bytes,   # 👈 asegúrate de que el modelo tenga este campo (tipo LargeBinary)
+        issue_date=date.today()
+    )
 
-    cert.pdf_path = str(path)
-    cert.status = CertificateStatus.LISTO_PARA_DESCARGAR
-    cert.issued_at = datetime.now(timezone.utc)
-    db.add(cert); db.commit(); db.refresh(cert)
+    db.add(cert)
+    db.commit()
+    db.refresh(cert)
+    db.close()
+
     return cert
