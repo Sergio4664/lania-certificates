@@ -35,7 +35,7 @@ Authorization: Bearer {{token}}
   "start_date": "2024-08-01",
   "end_date": "2024-08-15",
   "hours": 40,
-  "created_by": 1
+  "created_by": 2
 }
 
 ### Crear Participante 1
@@ -121,7 +121,15 @@ Authorization: Bearer {{token}}
 }
 
 ### ==============================================
-### 6. VERIFICACIÓN PÚBLICA (sin autenticación)
+### 6. LISTAR CERTIFICADOS
+### ==============================================
+
+### Listar todos los certificados
+GET {{baseUrl}}/api/admin/certificates
+Authorization: Bearer {{token}}
+
+### ==============================================
+### 7. VERIFICACIÓN PÚBLICA (sin autenticación)
 ### ==============================================
 
 ### Verificar certificado por token QR (ejemplo)
@@ -131,43 +139,5 @@ Accept: application/json
 
 ### Descargar PDF por serial (ejemplo)  
 ### Nota: Cambia "SERIAL_AQUI" por un serial real
-GET {{baseUrl}}/v/serial/SERIAL_AQUI/pdf
+GET {{baseUrl}}/v/serial/LANIA-2025-6CACFCC4/pdf
 Accept: application/pdf
-
-### ==============================================
-### 7. CONSULTAS ADICIONALES
-### ==============================================
-
-### Obtener curso específico
-GET {{baseUrl}}/api/admin/courses/1
-Authorization: Bearer {{token}}
-
-### Actualizar curso
-PUT {{baseUrl}}/api/admin/courses/1
-Content-Type: application/json
-Authorization: Bearer {{token}}
-
-{
-  "name": "Curso de Python para Data Science - ACTUALIZADO",
-  "hours": 45
-}
-
-### ==============================================
-### 8. PRUEBAS DE ERROR
-### ==============================================
-
-### Login con credenciales incorrectas
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-
-{
-  "email": "wrong@email.com",
-  "password": "wrongpassword"
-}
-
-### Acceder sin token (debería dar error 401)
-GET {{baseUrl}}/api/admin/courses
-
-### Verificar token inexistente
-GET {{baseUrl}}/v/t/token-inexistente
-Accept: application/json

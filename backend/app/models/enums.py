@@ -1,7 +1,8 @@
-# app/models/enums.py
+# app/models/enums.py (ACTUALIZADO)
 from enum import Enum as PyEnum
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import MetaData
+
 Base = declarative_base(metadata=MetaData())
 
 class CertificateStatus(str, PyEnum):
@@ -12,4 +13,8 @@ class CertificateStatus(str, PyEnum):
     REVOCADO = "REVOCADO"
 
 class CertificateKind(str, PyEnum):
-    ASISTENCIA="ASISTENCIA"; APROBACION="APROBACION"; PARTICIPACION="PARTICIPACION"; DIPLOMADO="DIPLOMADO"; TALLER="TALLER"
+    ASISTENCIA = "ASISTENCIA"
+    APROBACION = "APROBACION" 
+    PARTICIPACION = "PARTICIPACION"
+    DIPLOMADO = "DIPLOMADO"
+    TALLER = "TALLER"
