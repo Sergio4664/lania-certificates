@@ -6,7 +6,7 @@ import os
 # URL de conexión a PostgreSQL
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg2://postgres:tu_password@localhost:5432/lania_certificates"
+    "postgresql+psycopg2://lania_user:12345678@localhost:5432/lania_certificates"
 )
 
 # Motor de conexión

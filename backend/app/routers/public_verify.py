@@ -1,5 +1,5 @@
 # app/routers/public_verify.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
@@ -10,17 +10,25 @@ router = APIRouter(prefix="/v", tags=["public"])
 
 def get_db():
     db = SessionLocal()
-    try: yield db
-    finally: db.close()
+    try: 
+        yield db
+    finally: 
+        db.close()
 
 @router.get("/t/{token}")
-def verify(token: str, db: Session = next(get_db())):
+def verify(token: str, db: Session = Depends(get_db)):
     cert = db.query(Certificate).filter(Certificate.qr_token == token).first()
-    if not cert: raise HTTPException(404, "No encontrado")
-    return {"serial": cert.serial, "status": cert.status, "issued_at": cert.issued_at, "kind": cert.kind}
+    if not cert: 
+        raise HTTPException(404, "No encontrado")
+    return {
+        "serial": cert.serial, 
+        "status": cert.status, 
+        "issued_at": cert.issued_at, 
+        "kind": cert.kind
+    }
 
 @router.get("/serial/{serial}/pdf")
-def download_pdf(serial: str, db: Session = next(get_db())):
+def download_pdf(serial: str, db: Session = Depends(get_db)):
     cert = db.query(Certificate).filter(Certificate.serial == serial).first()
     if not cert or cert.status != CertificateStatus.LISTO_PARA_DESCARGAR:
         raise HTTPException(403, "No disponible")
