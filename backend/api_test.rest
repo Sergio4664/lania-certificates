@@ -16,8 +16,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "Name": "lania_user",
-  "Password": "12345678"
+  "email": "sergio@lania.mx",
+  "password": "12345678"
 }
 
 ### ==============================================
@@ -132,12 +132,102 @@ Authorization: Bearer {{token}}
 ### 7. VERIFICACIÓN PÚBLICA (sin autenticación)
 ### ==============================================
 
-### Verificar certificado por token QR (ejemplo)
-### Nota: Cambia "TOKEN_AQUI" por un qr_token real obtenido al crear un certificado
+### Verificar certificado por token QR
+### Nota: Después de crear un certificado, copia el qr_token de la respuesta y reemplaza TOKEN_AQUI
 GET {{baseUrl}}/v/t/TOKEN_AQUI
 Accept: application/json
 
-### Descargar PDF por serial (ejemplo)  
-### Nota: Cambia "SERIAL_AQUI" por un serial real
-GET {{baseUrl}}/v/serial/LANIA-2025-6CACFCC4/pdf
+### Descargar PDF por serial
+### Nota: Después de crear un certificado, copia el serial de la respuesta y reemplaza SERIAL_AQUI
+GET {{baseUrl}}/v/serial/SERIAL_AQUI/pdf
 Accept: application/pdf
+
+### ==============================================
+### 8. CONSULTAS ADICIONALES
+### ==============================================
+
+### Obtener curso específico
+GET {{baseUrl}}/api/admin/courses/1
+Authorization: Bearer {{token}}
+
+### Obtener participante específico
+GET {{baseUrl}}/api/admin/participants/1
+Authorization: Bearer {{token}}
+
+### Actualizar curso
+PUT {{baseUrl}}/api/admin/courses/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Curso de Python para Data Science - ACTUALIZADO",
+  "hours": 45
+}
+
+### Actualizar participante
+PUT {{baseUrl}}/api/admin/participants/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "full_name": "Juan Pérez García - ACTUALIZADO",
+  "phone": "55-9999-8888"
+}
+
+### ==============================================
+### 9. PRUEBAS DE ERROR (para verificar validaciones)
+### ==============================================
+
+### Login con credenciales incorrectas
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "wrong@email.com",
+  "password": "wrongpassword"
+}
+
+### Acceder sin token (debería dar error 401)
+GET {{baseUrl}}/api/admin/courses
+
+### Crear participante con email duplicado (después de crear el primero)
+POST {{baseUrl}}/api/admin/participants
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "juan.perez@email.com",
+  "full_name": "Otro Juan Pérez",
+  "phone": "55-0000-0000"
+}
+
+### Crear certificado duplicado (después de crear el primero)
+POST {{baseUrl}}/api/admin/certificates/issue
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "course_id": 1,
+  "participant_id": 1,
+  "kind": "APROBACION"
+}
+
+### Verificar token de certificado inexistente
+GET {{baseUrl}}/v/t/token-inexistente
+Accept: application/json
+
+### Intentar descargar PDF de certificado inexistente
+GET {{baseUrl}}/v/serial/SERIAL-INEXISTENTE/pdf
+Accept: application/pdf
+
+### ==============================================
+### 10. OPERACIONES DE ELIMINACIÓN (usar con cuidado)
+### ==============================================
+
+### Eliminar curso (esto eliminará también certificados relacionados)
+# DELETE {{baseUrl}}/api/admin/courses/1
+# Authorization: Bearer {{token}}
+
+### Eliminar participante (esto eliminará también certificados relacionados)
+# DELETE {{baseUrl}}/api/admin/participants/1
+# Authorization: Bearer {{token}}
