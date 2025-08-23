@@ -45,9 +45,11 @@ import { Router } from '@angular/router';
               type="text"
               [(ngModel)]="email" 
               name="email" 
-              placeholder="Ingresa tu usuario" 
-              required 
+              (focus)="onEmailFocus()"
+              (blur)="onEmailBlur()"
+              [class.placeholder-text]="isEmailPlaceholder"
               [class.error]="error"
+              required 
             />
           </div>
           
@@ -62,12 +64,14 @@ import { Router } from '@angular/router';
             </label>
             <input 
               id="password"
-              type="password" 
+              [type]="isPasswordPlaceholder ? 'text' : 'password'"
               [(ngModel)]="password" 
               name="password" 
-              placeholder="Ingresa tu contraseña" 
-              required 
+              (focus)="onPasswordFocus()"
+              (blur)="onPasswordBlur()"
+              [class.placeholder-text]="isPasswordPlaceholder"
               [class.error]="error"
+              required 
             />
           </div>
           
@@ -202,6 +206,17 @@ import { Router } from '@angular/router';
       box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
     }
 
+    /* Estilos para el placeholder personalizado */
+    .form-group input.placeholder-text {
+      color: #999 !important;
+      font-style: italic;
+    }
+
+    .form-group input:not(.placeholder-text) {
+      color: #333;
+      font-style: normal;
+    }
+
     .login-btn {
       width: 100%;
       padding: 16px;
@@ -297,7 +312,54 @@ export default class LoginComponent {
   loading = false;
   error = '';
 
+  // Getters para verificar si son placeholders
+  get isEmailPlaceholder(): boolean {
+    return this.email === 'Ingrese su correo institucional';
+  }
+
+  get isPasswordPlaceholder(): boolean {
+    return this.password === 'Password';
+  }
+
+  // Eventos para el campo email
+  onEmailFocus() {
+    if (this.isEmailPlaceholder) {
+      this.email = '';
+    }
+  }
+
+  onEmailBlur() {
+    if (this.email.trim() === '') {
+      this.email = 'Ingrese su correo institucional';
+    }
+  }
+
+  // Eventos para el campo password
+  onPasswordFocus() {
+    if (this.isPasswordPlaceholder) {
+      this.password = '';
+    }
+  }
+
+  onPasswordBlur() {
+    if (this.password.trim() === '') {
+      this.password = 'Password';
+    }
+  }
+
   onSubmit() {
+    // Validar que no sean placeholders
+    if (this.isEmailPlaceholder || this.isPasswordPlaceholder) {
+      this.error = 'Por favor complete todos los campos.';
+      return;
+    }
+
+    // Validar que no estén vacíos
+    if (!this.email.trim() || !this.password.trim()) {
+      this.error = 'Por favor complete todos los campos.';
+      return;
+    }
+
     this.loading = true;
     this.error = '';
     

@@ -4,6 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
+interface Teacher {
+  id: number;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+}
+
+
 interface Course {
   id: number;
   code: string;
@@ -86,6 +94,16 @@ interface Certificate {
             </svg>
             Dashboard
           </div>
+          <div class="nav-item" 
+     [class.active]="activeModule === 'teachers'" 
+     (click)="setActiveModule('teachers')">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="7" r="4"></circle>
+    <path d="M5.5 21a7.5 7.5 0 0 1 13 0"></path>
+  </svg>
+  Docentes
+</div>
+
           <div class="nav-item" 
                [class.active]="activeModule === 'courses'" 
                (click)="setActiveModule('courses')">
@@ -177,6 +195,74 @@ interface Certificate {
                 Nuevo Curso
               </button>
             </div>
+
+            <!-- Teachers Module -->
+<div *ngIf="activeModule === 'docentes'" class="module-content">
+  <div class="module-header">
+    <h2>Gestión de Docentes</h2>
+    <button class="primary-btn" (click)="showTeacherForm = !showTeacherForm">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Nuevo Docente
+    </button>
+  </div>
+
+  <!-- Teacher Form -->
+  <div *ngIf="showTeacherForm" class="form-card">
+    <h3>Registrar Docente</h3>
+    <form (ngSubmit)="createTeacher()" class="form-grid">
+      <div class="form-group">
+        <label>Nombre Completo</label>
+        <input [(ngModel)]="newTeacher.full_name" name="full_name" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="newTeacher.email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" [(ngModel)]="newTeacher.password" name="password" required>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="secondary-btn" (click)="showTeacherForm = false">Cancelar</button>
+        <button type="submit" class="primary-btn">Crear Docente</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Teachers Table -->
+  <div class="data-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let teacher of teachers">
+          <td>{{teacher.full_name}}</td>
+          <td>{{teacher.email}}</td>
+          <td>{{teacher.is_active ? 'Activo' : 'Inactivo'}}</td>
+          <td>
+            <button class="icon-btn edit" (click)="disableTeacher(teacher.id)" 
+                    [disabled]="!teacher.is_active">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18"></path>
+                <path d="M6 6l12 12"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
             <!-- Course Form -->
             <div *ngIf="showCourseForm" class="form-card">
@@ -821,18 +907,27 @@ export default class DashboardComponent implements OnInit {
   private router = inject(Router);
 
   activeModule = 'overview';
-  
+
   // Data arrays
   courses: Course[] = [];
   participants: Participant[] = [];
   certificates: Certificate[] = [];
+  teachers: Teacher[] = [];
 
   // Form visibility flags
   showCourseForm = false;
   showParticipantForm = false;
   showCertificateForm = false;
+  showTeacherForm = false;
+
 
   // Form models
+  newTeacher = {
+    full_name: '',
+    email: '',
+    password: ''
+  };
+
   newCourse = {
     code: '',
     name: '',
@@ -880,6 +975,11 @@ export default class DashboardComponent implements OnInit {
     // Load certificates
     this.http.get<Certificate[]>('http://127.0.0.1:8000/api/admin/certificates', { headers })
       .subscribe(data => this.certificates = data);
+
+    // Load teachers
+    this.http.get<Teacher[]>('http://127.0.0.1:8000/api/admin/teachers', { headers })
+      .subscribe(data => this.teachers = data);
+
   }
 
   createCourse() {
@@ -924,6 +1024,32 @@ export default class DashboardComponent implements OnInit {
           this.newCertificate = { course_id: '', participant_id: '', kind: '' };
         },
         error: (err) => console.error('Error creating certificate:', err)
+      });
+  }
+
+  createTeacher() {
+    const token = localStorage.getItem('access_token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    this.http.post('http://127.0.0.1:8000/api/admin/teachers', this.newTeacher, { headers })
+      .subscribe({
+        next: () => {
+          this.loadData();
+          this.showTeacherForm = false;
+          this.newTeacher = { full_name: '', email: '', password: '' };
+        },
+        error: (err) => console.error('Error creating teacher:', err)
+      });
+  }
+
+  disableTeacher(id: number) {
+    const token = localStorage.getItem('access_token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    this.http.delete(`http://127.0.0.1:8000/api/admin/teachers/${id}`, { headers })
+      .subscribe({
+        next: () => this.loadData(),
+        error: (err) => console.error('Error disabling teacher:', err)
       });
   }
 
