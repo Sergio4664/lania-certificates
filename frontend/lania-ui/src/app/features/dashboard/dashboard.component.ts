@@ -11,7 +11,6 @@ interface Teacher {
   is_active: boolean;
 }
 
-
 interface Course {
   id: number;
   code: string;
@@ -95,15 +94,14 @@ interface Certificate {
             Dashboard
           </div>
           <div class="nav-item" 
-     [class.active]="activeModule === 'teachers'" 
-     (click)="setActiveModule('teachers')">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <circle cx="12" cy="7" r="4"></circle>
-    <path d="M5.5 21a7.5 7.5 0 0 1 13 0"></path>
-  </svg>
-  Docentes
-</div>
-
+               [class.active]="activeModule === 'teachers'" 
+               (click)="setActiveModule('teachers')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M5.5 21a7.5 7.5 0 0 1 13 0"></path>
+            </svg>
+            Docentes
+          </div>
           <div class="nav-item" 
                [class.active]="activeModule === 'courses'" 
                (click)="setActiveModule('courses')">
@@ -183,6 +181,76 @@ interface Certificate {
             </div>
           </div>
 
+          <!-- Teachers Module -->
+          <div *ngIf="activeModule === 'teachers'" class="module-content">
+            <div class="module-header">
+              <h2>Gestión de Docentes</h2>
+              <button class="primary-btn" (click)="showTeacherForm = !showTeacherForm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nuevo Docente
+              </button>
+            </div>
+
+<!-- Teacher Form -->
+<div *ngIf="showTeacherForm" class="form-card">
+  <h3>Registrar Docente</h3>
+  <form (ngSubmit)="createTeacher()" class="form-grid">
+    <div class="form-group">
+      <label>Nombre Completo</label>
+      <input [(ngModel)]="newTeacher.full_name" name="full_name" required>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" [(ngModel)]="newTeacher.email" name="email" required>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="secondary-btn" (click)="showTeacherForm = false">Cancelar</button>
+      <button type="submit" class="primary-btn">Crear Docente</button>
+    </div>
+  </form>
+</div>
+
+
+            <!-- Teachers Table -->
+            <div class="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let teacher of teachers">
+                    <td>{{teacher.full_name}}</td>
+                    <td>{{teacher.email}}</td>
+                    <td>
+                      <span class="status" [class]="teacher.is_active ? 'status-active' : 'status-inactive'">
+                        {{teacher.is_active ? 'Activo' : 'Inactivo'}}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="icon-btn delete" 
+                              (click)="disableTeacher(teacher.id)" 
+                              [disabled]="!teacher.is_active"
+                              title="Desactivar docente">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M18 6L6 18"></path>
+                          <path d="M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Courses Module -->
           <div *ngIf="activeModule === 'courses'" class="module-content">
             <div class="module-header">
@@ -195,74 +263,6 @@ interface Certificate {
                 Nuevo Curso
               </button>
             </div>
-
-            <!-- Teachers Module -->
-<div *ngIf="activeModule === 'docentes'" class="module-content">
-  <div class="module-header">
-    <h2>Gestión de Docentes</h2>
-    <button class="primary-btn" (click)="showTeacherForm = !showTeacherForm">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      Nuevo Docente
-    </button>
-  </div>
-
-  <!-- Teacher Form -->
-  <div *ngIf="showTeacherForm" class="form-card">
-    <h3>Registrar Docente</h3>
-    <form (ngSubmit)="createTeacher()" class="form-grid">
-      <div class="form-group">
-        <label>Nombre Completo</label>
-        <input [(ngModel)]="newTeacher.full_name" name="full_name" required>
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" [(ngModel)]="newTeacher.email" name="email" required>
-      </div>
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" [(ngModel)]="newTeacher.password" name="password" required>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="secondary-btn" (click)="showTeacherForm = false">Cancelar</button>
-        <button type="submit" class="primary-btn">Crear Docente</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Teachers Table -->
-  <div class="data-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let teacher of teachers">
-          <td>{{teacher.full_name}}</td>
-          <td>{{teacher.email}}</td>
-          <td>{{teacher.is_active ? 'Activo' : 'Inactivo'}}</td>
-          <td>
-            <button class="icon-btn edit" (click)="disableTeacher(teacher.id)" 
-                    [disabled]="!teacher.is_active">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18"></path>
-                <path d="M6 6l12 12"></path>
-              </svg>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
 
             <!-- Course Form -->
             <div *ngIf="showCourseForm" class="form-card">
@@ -794,6 +794,27 @@ interface Certificate {
       background: #bbf7d0;
     }
 
+    .icon-btn.delete {
+      background: #fecaca;
+      color: #dc2626;
+    }
+
+    .icon-btn.delete:hover:not(:disabled) {
+      background: #fca5a5;
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #f1f5f9 !important;
+      color: #9ca3af !important;
+    }
+
+    .icon-btn:disabled:hover {
+      background: #f1f5f9 !important;
+      transform: none !important;
+    }
+
     /* Tables */
     .data-table {
       background: white;
@@ -859,6 +880,25 @@ interface Certificate {
     .status-listo-para-descargar { background: #dcfce7; color: #16a34a; }
     .status-revocado { background: #fecaca; color: #dc2626; }
 
+    /* Status indicators for teachers */
+    .status-active {
+      background: #dcfce7;
+      color: #16a34a;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-inactive {
+      background: #fecaca;
+      color: #dc2626;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .dashboard-main {
@@ -920,7 +960,6 @@ export default class DashboardComponent implements OnInit {
   showCertificateForm = false;
   showTeacherForm = false;
 
-
   // Form models
   newTeacher = {
     full_name: '',
@@ -979,7 +1018,6 @@ export default class DashboardComponent implements OnInit {
     // Load teachers
     this.http.get<Teacher[]>('http://127.0.0.1:8000/api/admin/teachers', { headers })
       .subscribe(data => this.teachers = data);
-
   }
 
   createCourse() {
