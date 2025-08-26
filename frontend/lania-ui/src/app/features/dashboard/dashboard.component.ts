@@ -19,6 +19,7 @@ interface Course {
   end_date: string;
   hours: number;
   created_by: number;
+  teachers?: Teacher[];
 }
 
 interface Participant {
@@ -178,6 +179,18 @@ interface Certificate {
                   <p>Certificados</p>
                 </div>
               </div>
+              <div class="stat-card">
+                <div class="stat-icon teachers">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="7" r="4"></circle>
+                    <path d="M5.5 21a7.5 7.5 0 0 1 13 0"></path>
+                  </svg>
+                </div>
+                <div class="stat-info">
+                  <h3>{{teachers.length}}</h3>
+                  <p>Docentes</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -194,25 +207,28 @@ interface Certificate {
               </button>
             </div>
 
-<!-- Teacher Form -->
-<div *ngIf="showTeacherForm" class="form-card">
-  <h3>Registrar Docente</h3>
-  <form (ngSubmit)="createTeacher()" class="form-grid">
-    <div class="form-group">
-      <label>Nombre Completo</label>
-      <input [(ngModel)]="newTeacher.full_name" name="full_name" required>
-    </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" [(ngModel)]="newTeacher.email" name="email" required>
-    </div>
-    <div class="form-actions">
-      <button type="button" class="secondary-btn" (click)="showTeacherForm = false">Cancelar</button>
-      <button type="submit" class="primary-btn">Crear Docente</button>
-    </div>
-  </form>
-</div>
-
+            <!-- Teacher Form -->
+            <div *ngIf="showTeacherForm" class="form-card">
+              <h3>Registrar Docente</h3>
+              <form (ngSubmit)="createTeacher()" class="form-grid">
+                <div class="form-group">
+                  <label>Nombre Completo</label>
+                  <input [(ngModel)]="newTeacher.full_name" name="full_name" required>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" [(ngModel)]="newTeacher.email" name="email" required>
+                </div>
+                <div class="form-group">
+                  <label>Contraseña</label>
+                  <input type="password" [(ngModel)]="newTeacher.password" name="password" required>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="secondary-btn" (click)="showTeacherForm = false">Cancelar</button>
+                  <button type="submit" class="primary-btn">Crear Docente</button>
+                </div>
+              </form>
+            </div>
 
             <!-- Teachers Table -->
             <div class="data-table">
@@ -288,6 +304,34 @@ interface Certificate {
                   <label>Horas</label>
                   <input type="number" [(ngModel)]="newCourse.hours" name="hours" required>
                 </div>
+                <div class="form-group full-width">
+                  <label>Docentes Asignados</label>
+                  <div class="teachers-selection">
+                    <div class="teachers-checkboxes">
+                      <div class="checkbox-item" *ngFor="let teacher of activeTeachers">
+                        <input 
+                          type="checkbox" 
+                          [id]="'teacher-' + teacher.id"
+                          [checked]="isTeacherSelected(teacher.id)"
+                          (change)="toggleTeacherSelection(teacher.id, $event)"
+                        >
+                        <label [for]="'teacher-' + teacher.id">
+                          {{teacher.full_name}}
+                          <small>({{teacher.email}})</small>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="selected-teachers" *ngIf="selectedTeacherIds.length > 0">
+                      <h4>Docentes seleccionados:</h4>
+                      <div class="teacher-tags">
+                        <span class="teacher-tag" *ngFor="let teacherId of selectedTeacherIds">
+                          {{getTeacherName(teacherId)}}
+                          <button type="button" (click)="removeTeacher(teacherId)" class="remove-tag">×</button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="form-actions">
                   <button type="button" class="secondary-btn" (click)="showCourseForm = false">Cancelar</button>
                   <button type="submit" class="primary-btn">Crear Curso</button>
@@ -305,6 +349,7 @@ interface Certificate {
                     <th>Inicio</th>
                     <th>Fin</th>
                     <th>Horas</th>
+                    <th>Docentes</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -315,6 +360,16 @@ interface Certificate {
                     <td>{{course.start_date | date:'dd/MM/yyyy'}}</td>
                     <td>{{course.end_date | date:'dd/MM/yyyy'}}</td>
                     <td>{{course.hours}}h</td>
+                    <td>
+                      <div class="teachers-list" *ngIf="course.teachers && course.teachers.length > 0; else noTeachers">
+                        <span class="teacher-tag" *ngFor="let teacher of course.teachers">
+                          {{teacher.full_name}}
+                        </span>
+                      </div>
+                      <ng-template #noTeachers>
+                        <span class="no-teachers">Sin docente asignado</span>
+                      </ng-template>
+                    </td>
                     <td>
                       <button class="icon-btn edit">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -659,6 +714,7 @@ interface Certificate {
     .stat-icon.courses { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .stat-icon.participants { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .stat-icon.certificates { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stat-icon.teachers { background: linear-gradient(135deg, #96fbc4 0%, #f9f586 100%); }
 
     .stat-info h3 {
       font-size: 32px;
@@ -701,6 +757,10 @@ interface Certificate {
       flex-direction: column;
     }
 
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
     .form-group label {
       color: #374151;
       font-weight: 600;
@@ -721,6 +781,103 @@ interface Certificate {
     .form-group select:focus {
       outline: none;
       border-color: #3b82f6;
+    }
+
+    /* Teachers Selection */
+    .teachers-selection {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      background: #f9fafb;
+    }
+
+    .teachers-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      margin: 0;
+      margin-top: 2px;
+      transform: scale(1.2);
+    }
+
+    .checkbox-item label {
+      margin: 0;
+      cursor: pointer;
+      flex: 1;
+      font-weight: 500;
+      color: #1f2937;
+    }
+
+    .checkbox-item label small {
+      display: block;
+      color: #6b7280;
+      font-weight: normal;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .selected-teachers {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+    }
+
+    .selected-teachers h4 {
+      color: #374151;
+      font-size: 14px;
+      margin: 0 0 8px 0;
+    }
+
+    .teacher-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .teacher-tag {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .remove-tag {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .remove-tag:hover {
+      background: rgba(239, 68, 68, 0.1);
     }
 
     .form-actions {
@@ -854,6 +1011,19 @@ interface Certificate {
       color: #1e293b;
     }
 
+    /* Teachers display in table */
+    .teachers-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .no-teachers {
+      color: #9ca3af;
+      font-style: italic;
+      font-size: 12px;
+    }
+
     /* Badges and Status */
     .badge {
       padding: 4px 12px;
@@ -939,6 +1109,10 @@ interface Certificate {
       .form-grid {
         grid-template-columns: 1fr;
       }
+
+      .teachers-checkboxes {
+        grid-template-columns: 1fr;
+      }
     }
   `]
 })
@@ -960,6 +1134,9 @@ export default class DashboardComponent implements OnInit {
   showCertificateForm = false;
   showTeacherForm = false;
 
+  // Teacher selection for courses
+  selectedTeacherIds: number[] = [];
+
   // Form models
   newTeacher = {
     full_name: '',
@@ -973,7 +1150,8 @@ export default class DashboardComponent implements OnInit {
     start_date: '',
     end_date: '',
     hours: 0,
-    created_by: 2
+    created_by: 2,
+    teacher_ids: [] as number[]
   };
 
   newParticipant = {
@@ -990,6 +1168,36 @@ export default class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+  }
+
+  // Computed properties
+  get activeTeachers(): Teacher[] {
+    return this.teachers.filter(t => t.is_active);
+  }
+
+  // Teacher selection methods
+  isTeacherSelected(teacherId: number): boolean {
+    return this.selectedTeacherIds.includes(teacherId);
+  }
+
+  toggleTeacherSelection(teacherId: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      if (!this.selectedTeacherIds.includes(teacherId)) {
+        this.selectedTeacherIds.push(teacherId);
+      }
+    } else {
+      this.selectedTeacherIds = this.selectedTeacherIds.filter(id => id !== teacherId);
+    }
+  }
+
+  removeTeacher(teacherId: number): void {
+    this.selectedTeacherIds = this.selectedTeacherIds.filter(id => id !== teacherId);
+  }
+
+  getTeacherName(teacherId: number): string {
+    const teacher = this.teachers.find(t => t.id === teacherId);
+    return teacher ? teacher.full_name : 'Docente no encontrado';
   }
 
   setActiveModule(module: string) {
@@ -1024,12 +1232,27 @@ export default class DashboardComponent implements OnInit {
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    this.http.post('http://127.0.0.1:8000/api/admin/courses', this.newCourse, { headers })
+    // Prepare course data with selected teachers
+    const courseData = {
+      ...this.newCourse,
+      teacher_ids: this.selectedTeacherIds
+    };
+
+    this.http.post('http://127.0.0.1:8000/api/admin/courses', courseData, { headers })
       .subscribe({
         next: () => {
           this.loadData();
           this.showCourseForm = false;
-          this.newCourse = { code: '', name: '', start_date: '', end_date: '', hours: 0, created_by: 2 };
+          this.selectedTeacherIds = [];
+          this.newCourse = { 
+            code: '', 
+            name: '', 
+            start_date: '', 
+            end_date: '', 
+            hours: 0, 
+            created_by: 2,
+            teacher_ids: []
+          };
         },
         error: (err) => console.error('Error creating course:', err)
       });

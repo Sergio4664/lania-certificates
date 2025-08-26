@@ -20,6 +20,7 @@ class User(Base):
     courses = relationship("Course", back_populates="creator", foreign_keys="Course.created_by")
     
     # Relación many-to-many con cursos que imparte (como docente)
+    # IMPORTANTE: Se debe importar después de definir Course para evitar problemas circulares
     teaching_courses = relationship(
         "Course", 
         secondary="course_teacher",
