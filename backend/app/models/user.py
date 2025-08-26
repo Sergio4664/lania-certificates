@@ -1,4 +1,4 @@
-# app/models/user.py (CORREGIDO)
+# backend/app/models/user.py
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, Text, BigInteger, DateTime
 from sqlalchemy.dialects.postgresql import CITEXT
@@ -17,4 +17,11 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     
     # Relaciones
-    courses = relationship("Course", back_populates="creator")
+    courses = relationship("Course", back_populates="creator", foreign_keys="Course.created_by")
+    
+    # Relación many-to-many con cursos que imparte (como docente)
+    teaching_courses = relationship(
+        "Course", 
+        secondary="course_teacher",
+        back_populates="teachers"
+    )

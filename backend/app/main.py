@@ -1,11 +1,18 @@
-# app/main.py
+# backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, admin_certificates, admin_courses, admin_participants, public_verify
+from app.routers import (
+    auth, 
+    admin_certificates, 
+    admin_courses, 
+    admin_participants, 
+    admin_teachers,  # ← AGREGADO
+    public_verify
+)
 from app.core.config import get_settings
 from app.database import Base, engine
-from app.models import course, enrollment, enums, participant, user  # Incluir todos los modelos
+from app.models import course, enrollment, enums, participant, user, certificate  # Incluir todos los modelos
 
 # Configuración
 settings = get_settings()
@@ -31,6 +38,7 @@ def read_root():
 # Routers
 app.include_router(auth.router)
 app.include_router(admin_certificates.router)
-app.include_router(admin_courses.router)  # ← ESTE FALTABA
-app.include_router(admin_participants.router) # ← ESTE FALTABA
+app.include_router(admin_courses.router)
+app.include_router(admin_participants.router)
+app.include_router(admin_teachers.router)  # ← AGREGADO
 app.include_router(public_verify.router)
