@@ -1,21 +1,47 @@
-import { Injectable } from '@angular/core';
+// src/app/features/teacher/teacher.service.ts
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+
+export interface DocenteDTO {
+  id: number;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+}
+
+export interface CreateDocenteDTO {
+  full_name: string;
+  email: string;
+  password: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class TeacherService {
-  private apiUrl = `${environment.apiUrl}/docentes`;
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  list(): Observable<DocenteDTO[]> {
+    return this.http.get<DocenteDTO[]>(`${this.apiUrl}/api/admin/teachers`);
+  }
 
-  getDocentes(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  create(docente: CreateDocenteDTO): Observable<DocenteDTO> {
+    return this.http.post<DocenteDTO>(`${this.apiUrl}/api/admin/teachers`, docente);
+  }
+
+  disable(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/api/admin/teachers/${id}`);
+  }
+
+  // Legacy methods for backward compatibility
+  getDocentes(): Observable<DocenteDTO[]> {
+    return this.list();
   }
 
   createDocente(docente: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, docente);
+    return this.create(docente);
   }
 }

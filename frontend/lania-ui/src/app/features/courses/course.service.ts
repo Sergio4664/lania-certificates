@@ -16,7 +16,7 @@ export interface CourseDTO {
 @Injectable({providedIn: 'root'})
 export class CourseService {
   private http = inject(HttpClient);
-  private base = environment.apiBase;
+  private base = environment.apiUrl; // Changed from apiBase to apiUrl to match environment
 
   listCourses() {
     return this.http.get<CourseDTO[]>(`${this.base}/api/admin/courses`);
@@ -36,4 +36,3 @@ export class CourseService {
     return this.http.get<CourseDTO[]>(`${this.base}/api/teacher/my-courses`);
   }
 }
-

@@ -9,7 +9,7 @@ import AdminTeachersComponent from './features/admin/teachers/admin-teachers.com
 import AdminCourseCreateComponent from './features/admin/courses/admin-course-create.component';
 
 // Docente
-import MyCoursesComponent from './features/teacher/my-courses.component';
+import MyCoursesComponent from '@features/dashboard/dashboard.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
