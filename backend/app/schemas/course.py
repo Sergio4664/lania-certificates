@@ -3,7 +3,7 @@ from pydantic import BaseModel, validator
 from datetime import date
 from typing import Optional, List
 
-class TeacherInfo(BaseModel):
+class DocenteInfo(BaseModel):
     """Información básica del docente para mostrar en los cursos"""
     id: int
     full_name: str
@@ -42,14 +42,14 @@ class CourseBase(BaseModel):
 
 class CourseCreate(CourseBase):
     created_by: int
-    teacher_ids: Optional[List[int]] = []  # Lista de IDs de docentes asignados
+    docente_ids: Optional[List[int]] = []  # Lista de IDs de docentes asignados
 
 class CourseUpdate(BaseModel):
     name: str | None = None
     start_date: date | None = None
     end_date: date | None = None
     hours: int | None = None
-    teacher_ids: Optional[List[int]] = None
+    docente_ids: Optional[List[int]] = None
     
     @validator('end_date', always=True)
     def end_date_validation(cls, v, values):
@@ -67,7 +67,7 @@ class CourseUpdate(BaseModel):
 class CourseOut(CourseBase):
     id: int
     created_by: int
-    teachers: Optional[List[TeacherInfo]] = []  # Lista de docentes asignados
+    docentes: Optional[List[DocenteInfo]] = []  # Lista de docentes asignados
 
     class Config:
         from_attributes = True

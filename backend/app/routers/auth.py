@@ -19,3 +19,4 @@ def login(payload: Login, db: Session = Depends(get_db)):
     if not u or not verify_password(payload.password, u.password_hash):
         raise HTTPException(status_code=400, detail="Credenciales inválidas")
     return Token(access_token=create_access_token(str(u.id)))
+

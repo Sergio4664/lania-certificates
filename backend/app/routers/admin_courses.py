@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from app.db.session import SessionLocal
 from app.models.course import Course
 from app.models.user import User
+from app.models.docente import Docente
 from app.schemas.course import CourseCreate, CourseUpdate, CourseOut
 import logging
 
@@ -24,43 +25,43 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
     try:
         # Crear el curso
         course_data = course.dict()
-        teacher_ids = course_data.pop('teacher_ids', [])
+        docente_ids = course_data.pop('docente_ids', [])
         
-        # Verificar que el creador existe y es válido
+        # Verificar que el creador existe y es admin activo
         creator = db.query(User).filter(
             User.id == course_data['created_by'],
-            User.is_active == True
+            User.is_active == True,
+            #User.role == "ADMIN"
         ).first()
         
         if not creator:
-            raise HTTPException(400, "El usuario creador no existe o no está activo")
+            raise HTTPException(400, "El usuario creador no existe, no está activo o no es admin")
         
         db_course = Course(**course_data)
         db.add(db_course)
         db.flush()  # Para obtener el ID sin hacer commit completo
         
         # Asignar docentes si se proporcionaron
-        if teacher_ids:
+        if docente_ids:
             # Filtrar que sean docentes activos
-            teachers = db.query(User).filter(
-                User.id.in_(teacher_ids),
-                User.role == "DOCENTE",
-                User.is_active == True
+            docentes = db.query(Docente).filter(
+                Docente.id.in_(docente_ids),
+                Docente.is_active == True
             ).all()
             
-            if len(teachers) != len(teacher_ids):
+            if len(docentes) != len(docente_ids):
                 db.rollback()
-                found_ids = [t.id for t in teachers]
-                missing_ids = [tid for tid in teacher_ids if tid not in found_ids]
+                found_ids = [d.id for d in docentes]
+                missing_ids = [did for did in docente_ids if did not in found_ids]
                 raise HTTPException(400, f"Docentes no encontrados o inactivos: {missing_ids}")
             
             # Asignar docentes al curso
-            db_course.teachers.extend(teachers)
+            db_course.docentes.extend(docentes)
         
         db.commit()
         db.refresh(db_course)
         
-        # Convertir a dict manualmente para incluir teachers
+        # Convertir a dict manualmente para incluir docentes
         result = CourseOut(
             id=db_course.id,
             code=db_course.code,
@@ -69,13 +70,13 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
             end_date=db_course.end_date,
             hours=db_course.hours,
             created_by=db_course.created_by,
-            teachers=[
+            docentes=[
                 {
-                    "id": teacher.id,
-                    "full_name": teacher.full_name,
-                    "email": teacher.email
+                    "id": docente.id,
+                    "full_name": docente.full_name,
+                    "email": docente.email
                 }
-                for teacher in db_course.teachers
+                for docente in db_course.docentes
             ]
         )
         return result
@@ -108,13 +109,13 @@ def list_courses(db: Session = Depends(get_db)):
                 "end_date": course.end_date.isoformat() if course.end_date else None,
                 "hours": course.hours,
                 "created_by": course.created_by,
-                "teachers": [
+                "docentes": [
                     {
-                        "id": teacher.id,
-                        "full_name": teacher.full_name,
-                        "email": teacher.email
+                        "id": docente.id,
+                        "full_name": docente.full_name,
+                        "email": docente.email
                     }
-                    for teacher in course.teachers
+                    for docente in course.docentes
                 ]
             }
             result.append(course_dict)
@@ -138,13 +139,13 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
             "end_date": course.end_date.isoformat(),
             "hours": course.hours,
             "created_by": course.created_by,
-            "teachers": [
+            "docentes": [
                 {
-                    "id": teacher.id,
-                    "full_name": teacher.full_name,
-                    "email": teacher.email
+                    "id": docente.id,
+                    "full_name": docente.full_name,
+                    "email": docente.email
                 }
-                for teacher in course.teachers
+                for docente in course.docentes
             ]
         }
     except HTTPException:
@@ -161,27 +162,26 @@ def update_course(course_id: int, data: CourseUpdate, db: Session = Depends(get_
             raise HTTPException(404, "Curso no encontrado")
         
         # Actualizar campos básicos
-        update_data = data.dict(exclude_unset=True, exclude={'teacher_ids'})
+        update_data = data.dict(exclude_unset=True, exclude={'docente_ids'})
         for field, value in update_data.items():
             setattr(course, field, value)
         
         # Actualizar docentes si se proporcionaron
-        if data.teacher_ids is not None:
+        if data.docente_ids is not None:
             # Obtener docentes activos
-            teachers = db.query(User).filter(
-                User.id.in_(data.teacher_ids),
-                User.role == "DOCENTE",
-                User.is_active == True
+            docentes = db.query(Docente).filter(
+                Docente.id.in_(data.docente_ids),
+                Docente.is_active == True
             ).all()
             
-            if len(teachers) != len(data.teacher_ids):
-                found_ids = [t.id for t in teachers]
-                missing_ids = [tid for tid in data.teacher_ids if tid not in found_ids]
+            if len(docentes) != len(data.docente_ids):
+                found_ids = [d.id for d in docentes]
+                missing_ids = [did for did in data.docente_ids if did not in found_ids]
                 raise HTTPException(400, f"Docentes no encontrados o inactivos: {missing_ids}")
             
             # Reemplazar la lista de docentes
-            course.teachers.clear()
-            course.teachers.extend(teachers)
+            course.docentes.clear()
+            course.docentes.extend(docentes)
         
         db.commit()
         db.refresh(course)
@@ -194,13 +194,13 @@ def update_course(course_id: int, data: CourseUpdate, db: Session = Depends(get_
             "end_date": course.end_date.isoformat(),
             "hours": course.hours,
             "created_by": course.created_by,
-            "teachers": [
+            "docentes": [
                 {
-                    "id": teacher.id,
-                    "full_name": teacher.full_name,
-                    "email": teacher.email
+                    "id": docente.id,
+                    "full_name": docente.full_name,
+                    "email": docente.email
                 }
-                for teacher in course.teachers
+                for docente in course.docentes
             ]
         }
     except HTTPException:

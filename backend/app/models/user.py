@@ -11,18 +11,10 @@ class User(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     email: Mapped[str] = mapped_column(CITEXT, unique=True, index=True)
     full_name: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[str] = mapped_column(Text, nullable=False)  # ADMIN|DOCENTE
+    role: Mapped[str] = mapped_column(Text, nullable=False)  # Solo ADMIN
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     
     # Relaciones
     courses = relationship("Course", back_populates="creator", foreign_keys="Course.created_by")
-    
-    # Relación many-to-many con cursos que imparte (como docente)
-    # IMPORTANTE: Se debe importar después de definir Course para evitar problemas circulares
-    teaching_courses = relationship(
-        "Course", 
-        secondary="course_teacher",
-        back_populates="teachers"
-    )

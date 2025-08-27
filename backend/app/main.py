@@ -3,18 +3,30 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from app.database import Base, engine
 
 from app.routers import (
     auth, 
     admin_certificates, 
     admin_courses, 
     admin_participants, 
-    admin_teachers,
+    admin_docentes,
     public_verify
 )
 from app.core.config import get_settings
 from app.database import Base, engine
-from app.models import course, enrollment, enums, participant, user, certificate
+
+# Import all models to ensure they're registered with SQLAlchemy
+from app.models import (
+    user,
+    participant,
+    course,
+    enrollment,
+    certificate,
+    enums,
+    docente,
+    association_tables
+)
 
 # Configurar logging
 logging.basicConfig(
@@ -80,7 +92,6 @@ app.include_router(auth.router)
 app.include_router(admin_certificates.router)
 app.include_router(admin_courses.router)
 app.include_router(admin_participants.router)
-app.include_router(admin_teachers.router)
+app.include_router(admin_docentes.router)
 app.include_router(public_verify.router)
 
-logger.info("Aplicación FastAPI iniciada correctamente")
